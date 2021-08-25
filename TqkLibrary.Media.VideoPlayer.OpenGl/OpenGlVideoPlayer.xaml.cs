@@ -98,6 +98,9 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
       }
 
       render.Draw(frame);
+
+      av_frame_unref(frame);
+      av_frame_free(&frame);
     }
 
     /// <summary>
