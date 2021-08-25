@@ -18,6 +18,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Runtime.InteropServices;
+using SharpGL.SceneGraph.Shaders;
+using TqkLibrary.Media.VideoPlayer.OpenGl.Renders;
 
 namespace TqkLibrary.Media.VideoPlayer.OpenGl
 {
@@ -41,11 +43,12 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
     #endregion
 
 
-    readonly AVFrameQueue frames = new AVFrameQueue();
     readonly OpenGL gl;
+    readonly AVFrameQueue frames = new AVFrameQueue();   
 
-    AVFrame* _currentFrame = null;
-    System.Drawing.Size? _currentSize = null;
+
+    IFrameRender render = null;
+    bool _IsSetup = false;
 
     public OpenGlVideoPlayer()
     {
@@ -57,49 +60,45 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
       //videoControl.MouseWheel += VideoControl_MouseWheel;
       //videoControl.MouseLeave += VideoControl_MouseLeave;
       videoControl.Resized += VideoControl_Resized;
+      videoControl.OpenGLInitialized += VideoControl_OpenGLInitialized;
+      videoControl.Unloaded += VideoControl_Unloaded;
       videoControl.OpenGLDraw += VideoControl_OpenGLDraw;
       videoControl.RenderContextType = RenderContextType.FBO;
-      videoControl.OpenGLVersion = SharpGL.Version.OpenGLVersion.OpenGL4_4;
+      //videoControl.OpenGLVersion = SharpGL.Version.OpenGLVersion.OpenGL4_4;
     }
 
-    private void UserControl_Loaded(object sender, RoutedEventArgs e)
+    private void VideoControl_Unloaded(object sender, RoutedEventArgs e)
+    {
+      frames.DisableAndFree();
+      _IsSetup = false;
+    }
+
+    private void VideoControl_OpenGLInitialized(object sender, SharpGL.WPF.OpenGLRoutedEventArgs args)
     {
       frames.Enable();
-    }
-    private void UserControl_Unloaded(object sender, RoutedEventArgs e)
-    {
-
-      frames.DisableAndFree();
-      AVFrameQueue.FreeFrame(_currentFrame);
     }
 
     private void VideoControl_Resized(object sender, SharpGL.WPF.OpenGLRoutedEventArgs args)
     {
-      gl.Viewport(0, 0, (int)videoControl.ActualWidth, (int)videoControl.ActualHeight);
-      //if (_currentSize != null) gl.Viewport(0, 0, _currentSize.Value.Width, _currentSize.Value.Height);
+      render?.Resize(videoControl.ActualWidth, videoControl.ActualHeight);
     }
 
     private void VideoControl_OpenGLDraw(object sender, SharpGL.WPF.OpenGLRoutedEventArgs args)
     {
-      if (frames.Count == 0) return;
+      if (frames.Count == 0 || render == null) return;
       AVFrame* frame = frames.Dequeue(this.IsSkipOldFrame);
       if (frame == null) return;
 
-      fixed (AVFrame** t = &_currentFrame) av_frame_free(t);
-      _currentFrame = frame;
+      if(!_IsSetup)
+      {
+        render.CreateInContext(gl);
+        render.Init(frame);
+        _IsSetup = true;
+        //return;
+      }
 
-      var size = new System.Drawing.Size(frame->width, frame->height);
-      if (size != _currentSize) _currentSize = size;
-
-      RenderTextures();
+      render.Draw(frame);
     }
-
-    private void RenderTextures()
-    {
-
-    }
-
-
 
     /// <summary>
     /// Only support YUV420
@@ -107,11 +106,13 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
     /// <param name="frame"></param>
     public void PushFrame(AVFrame* frame)
     {
-      switch((AVPixelFormat)frame->format)
+      switch ((AVPixelFormat)frame->format)
       {
-        //case AVPixelFormat.AV_PIX_FMT_NV12://VGA decode
-        //  break;
+        case AVPixelFormat.AV_PIX_FMT_NV12://VGA decode
+          if (render == null) render = new NV12Render();
+          break;
         case AVPixelFormat.AV_PIX_FMT_YUV420P://h264 decode
+          if (render == null) render = new YUV420Render();
           break;
         default: throw new NotSupportedException(((AVPixelFormat)frame->format).ToString());
       }
