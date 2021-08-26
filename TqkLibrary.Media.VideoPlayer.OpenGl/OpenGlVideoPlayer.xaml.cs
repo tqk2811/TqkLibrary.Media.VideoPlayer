@@ -88,19 +88,23 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
       if (frames.Count == 0 || render == null) return;
       AVFrame* frame = frames.Dequeue(this.IsSkipOldFrame);
       if (frame == null) return;
-
-      if(!_IsSetup)
+      try
       {
-        render.CreateInContext(gl);
-        render.Init(frame);
-        _IsSetup = true;
-        //return;
+        if (!_IsSetup)
+        {
+          render.CreateInContext(gl);
+          render.Init(frame);
+          _IsSetup = true;
+          //return;
+        }
+
+        render.Draw(frame);
       }
-
-      render.Draw(frame);
-
-      av_frame_unref(frame);
-      av_frame_free(&frame);
+      finally
+      {
+        av_frame_unref(frame);
+        av_frame_free(&frame);
+      }
     }
 
     /// <summary>

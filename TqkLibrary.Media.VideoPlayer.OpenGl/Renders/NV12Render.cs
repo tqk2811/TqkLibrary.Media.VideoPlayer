@@ -20,7 +20,7 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
     public OpenGL CurrentOpenGLContext { get; private set; }
     public void CreateInContext(OpenGL gl)
     {
-      DestroyInContext(CurrentOpenGLContext);
+      if(CurrentOpenGLContext != null) DestroyInContext(CurrentOpenGLContext);
       this.CurrentOpenGLContext = gl;
     }
     public void DestroyInContext(OpenGL gl)
@@ -28,9 +28,8 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
       _program.DestroyInContext(gl);
       _fragmentShader.DestroyInContext(gl);
       _vertexShader.DestroyInContext(gl);
-      gl?.DeleteTextures(_Texs.Length, _Texs);
+      gl.DeleteTextures(_Texs.Length, _Texs);
       CurrentOpenGLContext = null;
-      DestroyFrame();
     }
     #endregion
 
@@ -40,10 +39,7 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
 
 
     OpenGL gl { get { return CurrentOpenGLContext; } }
-
     readonly uint[] _Texs = new uint[2];
-    AVFrame* _currentFrame = null;
-
 
 
 
@@ -51,16 +47,11 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
     {
       if ((AVPixelFormat)frame->format != AVPixelFormat.AV_PIX_FMT_YUV420P) throw new NotSupportedException(((AVPixelFormat)frame->format).ToString());
       if (CurrentOpenGLContext == null) throw new Exception("Call CreateInContext first");
-      DestroyFrame();
-      this._currentFrame = frame;
-
 
     }
 
     public void Draw(AVFrame* frame)
     {
-      DestroyFrame();
-      this._currentFrame = frame;
 
     }
 
@@ -79,7 +70,7 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
 
 
 
-    private void InitTexture()
+    private void InitTexture(AVFrame* frame)
     {
       gl.GenTextures(_Texs.Length, _Texs);
       for (uint i = 0; i < _Texs.Length; i++)
@@ -113,12 +104,6 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
       _program.Link();
       if (_program.LinkStatus != true)
         throw new Exception(_program.InfoLog);
-    }
-
-    private void DestroyFrame()
-    {
-      av_frame_unref(_currentFrame);
-      fixed (AVFrame** f = &_currentFrame) av_frame_free(f);
     }
   }
 }
