@@ -59,15 +59,16 @@ void main(void)
     readonly FragmentShader _fragmentShader = new FragmentShader();
     readonly uint[] _Texs = new uint[3];
     readonly int[] _textureUniforms = new int[3];
-    OpenGL gl { get { return CurrentOpenGLContext; } }
+    readonly List<int[]> buffers = new List<int[]>();
 
-    //AVFrame* _currentFrame = null;
+    OpenGL gl { get { return CurrentOpenGLContext; } }
 
 
     #region IHasOpenGLContext
     public OpenGL CurrentOpenGLContext { get; private set; }
     public void CreateInContext(OpenGL gl)
     {
+      if (CurrentOpenGLContext != null) DestroyInContext(CurrentOpenGLContext);
       this.CurrentOpenGLContext = gl;
     }
     public void DestroyInContext(OpenGL gl)
@@ -77,7 +78,6 @@ void main(void)
       _vertexShader.DestroyInContext(gl);
       gl?.DeleteTextures(_Texs.Length, _Texs);
       CurrentOpenGLContext = null;
-      //DestroyFrame();
     }
     #endregion
 
@@ -91,8 +91,6 @@ void main(void)
 
     public void Draw(AVFrame* frame)
     {
-      //DestroyFrame();
-      //this._currentFrame = frame;
       DrawTexture(frame);
     }
 
@@ -134,7 +132,7 @@ void main(void)
       gl.DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
-    List<int[]> buffers = new List<int[]>();
+    
 
     private void InitTexture(AVFrame* frame)
     {
@@ -202,11 +200,5 @@ void main(void)
       gl.EnableVertexAttribArray(ATTRIBUTE_VERTEX);
       gl.EnableVertexAttribArray(ATTRIBUTE_TEXTURE);
     }
-
-    //private void DestroyFrame()
-    //{
-    //  av_frame_unref(_currentFrame);
-    //  fixed (AVFrame** f = &_currentFrame) av_frame_free(f);
-    //}
   }
 }
