@@ -20,7 +20,7 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
     public OpenGL CurrentOpenGLContext { get; private set; }
     public void CreateInContext(OpenGL gl)
     {
-      DestroyInContext(CurrentOpenGLContext);
+      if(CurrentOpenGLContext != null) DestroyInContext(CurrentOpenGLContext);
       this.CurrentOpenGLContext = gl;
     }
     public void DestroyInContext(OpenGL gl)
@@ -28,9 +28,8 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
       _program.DestroyInContext(gl);
       _fragmentShader.DestroyInContext(gl);
       _vertexShader.DestroyInContext(gl);
-      gl?.DeleteTextures(_Texs.Length, _Texs);
+      gl.DeleteTextures(_Texs.Length, _Texs);
       CurrentOpenGLContext = null;
-      DestroyFrame();
     }
     #endregion
 
@@ -38,12 +37,8 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
     readonly VertexShader _vertexShader = new VertexShader();
     readonly FragmentShader _fragmentShader = new FragmentShader();
 
-
     OpenGL gl { get { return CurrentOpenGLContext; } }
-
     readonly uint[] _Texs = new uint[3];
-    AVFrame* _currentFrame = null;
-
     
    
    
@@ -51,16 +46,11 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
     {
       if ((AVPixelFormat)frame->format != AVPixelFormat.AV_PIX_FMT_YUV420P) throw new NotSupportedException(((AVPixelFormat)frame->format).ToString());
       if (CurrentOpenGLContext == null) throw new Exception("Call CreateInContext first");
-      DestroyFrame();
-      this._currentFrame = frame;
-
       
     }
 
     public void Draw(AVFrame* frame)
     {
-      DestroyFrame();
-      this._currentFrame = frame;
 
     }
 
@@ -74,15 +64,15 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
 
 
 
-    private void InitTexture()
+    private void InitTexture(AVFrame* frame)
     {
       gl.GenTextures(_Texs.Length, _Texs);
       for (uint i = 0; i < _Texs.Length; i++)
       {
         gl.BindTexture(GL_TEXTURE_2D, _Texs[i]);
         gl.TexImage2D(GL_TEXTURE_2D, 0, GL_R8,//GL_LUMINANCE
-          i == 0 ? _currentFrame->width : _currentFrame->width / 2,
-          i == 0 ? _currentFrame->height : _currentFrame->height / 2,
+          i == 0 ? frame->width : frame->width / 2,
+          i == 0 ? frame->height : frame->height / 2,
           0, GL_RED /*GL_LUMINANCE*/, GL_UNSIGNED_BYTE, IntPtr.Zero);
 
         gl.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -110,12 +100,6 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl.Renders
       _program.Link();
       if (_program.LinkStatus != true)
         throw new Exception(_program.InfoLog);
-    }
-
-    private void DestroyFrame()
-    {
-      av_frame_unref(_currentFrame);
-      fixed (AVFrame** f = &_currentFrame) av_frame_free(f);
     }
   }
 }
