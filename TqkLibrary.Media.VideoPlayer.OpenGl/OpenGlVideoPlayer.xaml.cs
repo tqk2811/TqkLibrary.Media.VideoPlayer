@@ -125,7 +125,7 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
       }
       frames.CloneAndEnqueue(frame);
 #if DEBUG
-      Console.WriteLine($"Pushed {frame->pts}, WxH: {frame->width}x{frame->height} linesize:{frame->linesize[0]},{frame->linesize[1]},{frame->linesize[2]}");
+      //Console.WriteLine($"Pushed {frame->pts}, WxH: {frame->width}x{frame->height} linesize:{frame->linesize[0]},{frame->linesize[1]},{frame->linesize[2]}");
 #endif
     }
   }
