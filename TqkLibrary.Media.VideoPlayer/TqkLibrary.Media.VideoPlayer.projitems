@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AVFrameQueue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IFrameQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IVideoPlayer.cs" />
   </ItemGroup>
 </Project>

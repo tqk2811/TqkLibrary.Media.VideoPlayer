@@ -20,6 +20,7 @@ using System.Windows.Shapes;
 using System.Runtime.InteropServices;
 using SharpGL.SceneGraph.Shaders;
 using TqkLibrary.Media.VideoPlayer.OpenGl.Renders;
+using TqkLibrary.ScrcpyDotNet;
 
 namespace TqkLibrary.Media.VideoPlayer.OpenGl
 {
@@ -42,13 +43,15 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
     }
     #endregion
 
-
+    public IFrameEndQueue AVFrameQueue
+    {
+      get { return frames; }
+    }
     readonly OpenGL gl;
-    readonly AVFrameQueue frames = new AVFrameQueue();   
+    readonly AVFrameQueue frames = new AVFrameQueue();
 
 
     IFrameRender render = null;
-    bool _IsSetup = false;
 
     public OpenGlVideoPlayer()
     {
@@ -70,7 +73,6 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
     private void VideoControl_Unloaded(object sender, RoutedEventArgs e)
     {
       frames.DisableAndFree();
-      _IsSetup = false;
     }
 
     private void VideoControl_OpenGLInitialized(object sender, SharpGL.WPF.OpenGLRoutedEventArgs args)
@@ -85,19 +87,33 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
 
     private void VideoControl_OpenGLDraw(object sender, SharpGL.WPF.OpenGLRoutedEventArgs args)
     {
-      if (frames.Count == 0 || render == null) return;
+      if (frames.Count == 0) return;
       AVFrame* frame = frames.Dequeue(this.IsSkipOldFrame);
       if (frame == null) return;
+
+      switch ((AVPixelFormat)frame->format)
+      {
+        case AVPixelFormat.AV_PIX_FMT_NV12://VGA decode
+          if (render == null)
+          {
+            render = new NV12Render(); 
+            render.CreateInContext(gl);
+            render.Init(frame);
+          }
+          break;
+        case AVPixelFormat.AV_PIX_FMT_YUV420P://h264 decode
+          if (render == null)
+          {
+            render = new YUV420Render();
+            render.CreateInContext(gl);
+            render.Init(frame);
+          }
+          break;
+        default: throw new NotSupportedException(((AVPixelFormat)frame->format).ToString());
+      }
+
       try
       {
-        if (!_IsSetup)
-        {
-          render.CreateInContext(gl);
-          render.Init(frame);
-          _IsSetup = true;
-          //return;
-        }
-
         render.Draw(frame);
       }
       finally
@@ -105,28 +121,6 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
         av_frame_unref(frame);
         av_frame_free(&frame);
       }
-    }
-
-    /// <summary>
-    /// Only support YUV420
-    /// </summary>
-    /// <param name="frame"></param>
-    public void PushFrame(AVFrame* frame)
-    {
-      switch ((AVPixelFormat)frame->format)
-      {
-        case AVPixelFormat.AV_PIX_FMT_NV12://VGA decode
-          if (render == null) render = new NV12Render();
-          break;
-        case AVPixelFormat.AV_PIX_FMT_YUV420P://h264 decode
-          if (render == null) render = new YUV420Render();
-          break;
-        default: throw new NotSupportedException(((AVPixelFormat)frame->format).ToString());
-      }
-      frames.CloneAndEnqueue(frame);
-#if DEBUG
-      //Console.WriteLine($"Pushed {frame->pts}, WxH: {frame->width}x{frame->height} linesize:{frame->linesize[0]},{frame->linesize[1]},{frame->linesize[2]}");
-#endif
     }
   }
 }

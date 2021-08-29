@@ -20,6 +20,10 @@
     <PackageReference Include="SharpGL.WPF" Version="3.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\TqkLibrary.ScrcpyDotNet\TqkLibrary.ScrcpyDotNet\TqkLibrary.ScrcpyDotNet.csproj" />
+  </ItemGroup>
+
   <Import Project="..\TqkLibrary.Media.VideoPlayer\TqkLibrary.Media.VideoPlayer.projitems" Label="Shared" />
 
 </Project>

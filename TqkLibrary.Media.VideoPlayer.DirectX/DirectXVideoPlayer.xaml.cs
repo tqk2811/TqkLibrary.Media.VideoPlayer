@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using FFmpeg.AutoGen;
+using TqkLibrary.FFmpegExt;
 using static FFmpeg.AutoGen.ffmpeg;
 
 namespace TqkLibrary.Media.VideoPlayer.DirectX
@@ -35,6 +36,8 @@ namespace TqkLibrary.Media.VideoPlayer.DirectX
       get { return (bool)GetValue(IsSkipOldFrameProperty); }
       set { SetValue(IsSkipOldFrameProperty, value); }
     }
+
+    public AVFrameQueue AVFrameQueue => throw new NotImplementedException();
     #endregion
 
 

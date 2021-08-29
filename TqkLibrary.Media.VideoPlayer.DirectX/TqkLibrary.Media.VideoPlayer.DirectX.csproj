@@ -18,6 +18,10 @@
     <PackageReference Include="FFmpeg.AutoGen" Version="4.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\TqkLibrary.ScrcpyDotNet\TqkLibrary.FFmpegExt\TqkLibrary.FFmpegExt.csproj" />
+  </ItemGroup>
+
   <Import Project="..\TqkLibrary.Media.VideoPlayer\TqkLibrary.Media.VideoPlayer.projitems" Label="Shared" />
 
 </Project>

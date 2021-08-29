@@ -27,14 +27,12 @@ void main(void)
 varying vec2 textureOut;
 uniform sampler2D tex_y;
 uniform sampler2D tex_uv;
-//uniform float sBrightnessValue;
-//uniform float sContrastValue;
 void main (void) {
   vec3 yuv;
   vec3 rgb;
-  yuv.x = texture2D(tex_y, textureOut).r;
+  yuv.x = texture2D(tex_y, textureOut).r;//rgba
   yuv.y = texture2D(tex_uv, textureOut).r - 0.5;
-  yuv.z = texture2D(tex_uv, textureOut).a - 0.5;
+  yuv.z = texture2D(tex_uv, textureOut).g - 0.5;
   
   rgb = mat3( 1,        1,          1,
               0,        -0.39465,   2.03211,
@@ -150,7 +148,7 @@ void main (void) {
         gl.TexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
           i == 0 ? frame->width : frame->width / 2,
           i == 0 ? frame->height : frame->height / 2,
-          GL_LUMINANCE,//i == 0 ? GL_LUMINANCE : GL_LUMINANCE_ALPHA,
+          i == 0 ? GL_LUMINANCE : GL_LUMINANCE,//GL_LUMINANCE,//
           GL_UNSIGNED_BYTE, _buffers[(int)i]);
       }
       fixed (float* v = &vertexVertices[0])
@@ -166,7 +164,6 @@ void main (void) {
     private void InitTexture(AVFrame* frame)
     {
       _frameSize = new Size(frame->width, frame->height);
-      gl.GenTextures(_texs.Length, _texs);
       for (uint i = 0; i < _texs.Length; i++)
       {
         gl.ActiveTexture(GL_TEXTURE0 + i);
@@ -178,11 +175,11 @@ void main (void) {
         gl.PixelStore(GL_UNPACK_ROW_LENGTH, frame->linesize[i]);
 
         gl.TexImage2D(GL_TEXTURE_2D, 0,
-          GL_LUMINANCE,//i == 0 ? GL_LUMINANCE : GL_LUMINANCE_ALPHA,
+          i == 0 ? GL_LUMINANCE : GL_LUMINANCE,//GL_LUMINANCE,//
           i == 0 ? frame->width : frame->width / 2,
           i == 0 ? frame->height : frame->height / 2,
           0,
-          GL_LUMINANCE,//i == 0 ? GL_LUMINANCE : GL_LUMINANCE_ALPHA, 
+          i == 0 ? GL_LUMINANCE : GL_LUMINANCE,//GL_LUMINANCE,//
           GL_UNSIGNED_BYTE, IntPtr.Zero);
 
         gl.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

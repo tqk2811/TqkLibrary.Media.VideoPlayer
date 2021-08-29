@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FFmpeg.AutoGen;
+﻿using FFmpeg.AutoGen;
 using static FFmpeg.AutoGen.ffmpeg;
+using System;
+using System.Collections.Generic;
+using TqkLibrary.Media.VideoPlayer;
+using TqkLibrary.ScrcpyDotNet;
 
 namespace TqkLibrary.Media.VideoPlayer
 {
-  unsafe class AVFrameQueue
+  unsafe class AVFrameQueue : IFrameEndQueue, IFrameQueue
   {
     readonly Queue<IntPtr> queues = new Queue<IntPtr>();
 
@@ -17,7 +16,7 @@ namespace TqkLibrary.Media.VideoPlayer
 
     public void CloneAndEnqueue(AVFrame* frame)
     {
-      lock(queues)
+      lock (queues)
       {
         if (IsEnable)
         {
@@ -34,8 +33,8 @@ namespace TqkLibrary.Media.VideoPlayer
         AVFrame* frame = null;
         do
         {
-          if(queues.Count > 0) frame = (AVFrame*)queues.Dequeue();
-        } 
+          if (queues.Count > 0) frame = (AVFrame*)queues.Dequeue();
+        }
         while (queues.Count > 0 && IsSkipOldFrame && FreeFrame(frame));
         return frame;
       }
@@ -46,21 +45,21 @@ namespace TqkLibrary.Media.VideoPlayer
       lock (queues) IsEnable = true;
     }
 
+    private static bool FreeFrame(AVFrame* frame)
+    {
+      av_frame_unref(frame);
+      av_frame_free(&frame);
+      return true;
+    }
+
     public void DisableAndFree()
     {
       lock (queues)
       {
         IsEnable = false;
-        foreach(var item in queues) FreeFrame((AVFrame*)item);
+        foreach (var item in queues) FreeFrame((AVFrame*)item);
         queues.Clear();
       }
-    }
-
-    internal static bool FreeFrame(AVFrame* frame)
-    {
-      av_frame_unref(frame);
-      av_frame_free(&frame);
-      return true;
     }
   }
 }
