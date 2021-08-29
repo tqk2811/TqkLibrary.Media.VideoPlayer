@@ -32,7 +32,7 @@ void main (void) {
   vec3 rgb;
   yuv.x = texture2D(tex_y, textureOut).r;//rgba
   yuv.y = texture2D(tex_uv, textureOut).r - 0.5;
-  yuv.z = texture2D(tex_uv, textureOut).g - 0.5;
+  yuv.z = texture2D(tex_uv, textureOut).a - 0.5;
   
   rgb = mat3( 1,        1,          1,
               0,        -0.39465,   2.03211,
@@ -144,11 +144,12 @@ void main (void) {
         }
         Marshal.Copy((IntPtr)frame->data[i], _buffers[(int)i], 0, _buffers[(int)i].Length);
 
-        gl.PixelStore(GL_UNPACK_ROW_LENGTH, frame->linesize[i]);
+        if(i == 0)gl.PixelStore(GL_UNPACK_ROW_LENGTH, frame->linesize[i]);
+        else gl.PixelStore(GL_UNPACK_ROW_LENGTH, frame->linesize[i] / 2);
         gl.TexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
           i == 0 ? frame->width : frame->width / 2,
           i == 0 ? frame->height : frame->height / 2,
-          i == 0 ? GL_LUMINANCE : GL_LUMINANCE,//GL_LUMINANCE,//
+          i == 0 ? GL_RED : GL_LUMINANCE_ALPHA,
           GL_UNSIGNED_BYTE, _buffers[(int)i]);
       }
       fixed (float* v = &vertexVertices[0])
@@ -175,11 +176,11 @@ void main (void) {
         gl.PixelStore(GL_UNPACK_ROW_LENGTH, frame->linesize[i]);
 
         gl.TexImage2D(GL_TEXTURE_2D, 0,
-          i == 0 ? GL_LUMINANCE : GL_LUMINANCE,//GL_LUMINANCE,//
+          i == 0 ? GL_RED : GL_LUMINANCE_ALPHA,
           i == 0 ? frame->width : frame->width / 2,
           i == 0 ? frame->height : frame->height / 2,
           0,
-          i == 0 ? GL_LUMINANCE : GL_LUMINANCE,//GL_LUMINANCE,//
+          i == 0 ? GL_RED : GL_LUMINANCE_ALPHA,
           GL_UNSIGNED_BYTE, IntPtr.Zero);
 
         gl.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

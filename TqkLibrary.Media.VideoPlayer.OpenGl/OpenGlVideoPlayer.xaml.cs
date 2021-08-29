@@ -50,7 +50,6 @@ namespace TqkLibrary.Media.VideoPlayer.OpenGl
     readonly OpenGL gl;
     readonly AVFrameQueue frames = new AVFrameQueue();
 
-
     IFrameRender render = null;
 
     public OpenGlVideoPlayer()
