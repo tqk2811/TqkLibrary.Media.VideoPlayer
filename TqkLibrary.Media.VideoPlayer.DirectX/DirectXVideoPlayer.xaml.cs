@@ -5,16 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using FFmpeg.AutoGen;
-using TqkLibrary.FFmpegExt;
-using static FFmpeg.AutoGen.ffmpeg;
+using TqkLibrary.ScrcpyDotNet;
 
 namespace TqkLibrary.Media.VideoPlayer.DirectX
 {
@@ -37,15 +29,13 @@ namespace TqkLibrary.Media.VideoPlayer.DirectX
       set { SetValue(IsSkipOldFrameProperty, value); }
     }
 
-    public AVFrameQueue AVFrameQueue => throw new NotImplementedException();
     #endregion
 
+    public IFrameEndQueue AVFrameQueue { get { return frames; } }
+    public ScrcpyControl Control { get; set; }
 
     readonly AVFrameQueue frames = new AVFrameQueue();
 
-
-    AVFrame* _currentFrame = null;
-    System.Drawing.Size? _currentSize = null;
 
 
     public DirectXVideoPlayer()
@@ -61,7 +51,6 @@ namespace TqkLibrary.Media.VideoPlayer.DirectX
     private void UserControl_Unloaded(object sender, RoutedEventArgs e)
     {
       frames.DisableAndFree();
-      AVFrameQueue.FreeFrame(_currentFrame);
     }
 
 
@@ -70,32 +59,6 @@ namespace TqkLibrary.Media.VideoPlayer.DirectX
 
 
 
-
-
-
-
-
-
-
-    /// <summary>
-    /// Only support YUV420
-    /// </summary>
-    /// <param name="frame"></param>
-    public void PushFrame(AVFrame* frame)
-    {
-      switch ((AVPixelFormat)frame->format)
-      {
-        //case AVPixelFormat.AV_PIX_FMT_NV12://VGA decode
-        //  break;
-        case AVPixelFormat.AV_PIX_FMT_YUV420P://h264 decode
-          break;
-        default: throw new NotSupportedException(((AVPixelFormat)frame->format).ToString());
-      }
-      frames.CloneAndEnqueue(frame);
-#if DEBUG
-      Console.WriteLine($"Pushed {frame->pts}, WxH: {frame->width}x{frame->height} linesize:{frame->linesize[0]},{frame->linesize[1]},{frame->linesize[2]}");
-#endif
-    }
 
   }
 }

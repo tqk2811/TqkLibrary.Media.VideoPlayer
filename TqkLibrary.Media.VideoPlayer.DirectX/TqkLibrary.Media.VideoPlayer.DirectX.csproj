@@ -1,16 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFrameworks>net462;net5.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
     <LangVersion>8.0</LangVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net462|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net462|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -19,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TqkLibrary.ScrcpyDotNet\TqkLibrary.FFmpegExt\TqkLibrary.FFmpegExt.csproj" />
+    <ProjectReference Include="..\..\TqkLibrary.ScrcpyDotNet\TqkLibrary.ScrcpyDotNet\TqkLibrary.ScrcpyDotNet.csproj" />
   </ItemGroup>
 
   <Import Project="..\TqkLibrary.Media.VideoPlayer\TqkLibrary.Media.VideoPlayer.projitems" Label="Shared" />

@@ -1,9 +1,7 @@
 ﻿using SharpGL;
 using static SharpGL.OpenGL;
-using SharpGL.SceneGraph.Core;
 using System;
 using FFmpeg.AutoGen;
-using static FFmpeg.AutoGen.ffmpeg;
 using System.Drawing;
 using SharpGL.SceneGraph.Shaders;
 using System.Collections.Generic;
@@ -59,11 +57,15 @@ void main (void) {
     readonly FragmentShader _fragmentShader = new FragmentShader();   
     readonly uint[] _texs = new uint[2];
     readonly List<int[]> _buffers = new List<int[]>();
-    Size? _frameSize = null;
     double screenWidth = 0;
     double screenHeight = 0;
 
     OpenGL gl { get { return CurrentOpenGLContext; } }
+
+
+    public Size? FrameSize { get; private set; } = null;
+    public Rectangle? ViewPort { get; private set; }
+    public double? ScaleRatio { get; private set; }
 
 
     #region IHasOpenGLContext
@@ -107,22 +109,24 @@ void main (void) {
     {
       this.screenWidth = width;
       this.screenHeight = height;
-
-      if (_frameSize != null)
+      
+      if (FrameSize != null && FrameSize.Value.Width > 0 && FrameSize.Value.Height > 0)
       {
-        double ratio_w = width / _frameSize.Value.Width;
-        double ratio_h = height / _frameSize.Value.Height;
-        double ratio = Math.Min(ratio_w, ratio_h);
+        double ratio_w = width / FrameSize.Value.Width;
+        double ratio_h = height / FrameSize.Value.Height;
+        ScaleRatio = Math.Min(ratio_w, ratio_h);
 
-        double w = _frameSize.Value.Width * ratio;
-        double h = _frameSize.Value.Height * ratio;
+        double w = FrameSize.Value.Width * ScaleRatio.Value;
+        double h = FrameSize.Value.Height * ScaleRatio.Value;
 
         int x = (int)((width - w) / 2);
         int y = (int)((height - h) / 2);
 
-        gl?.Viewport(x, y, (int)w, (int)h);
+        ViewPort = new Rectangle(x, y, (int)w, (int)h);
       }
-      else gl?.Viewport(0, 0, (int)width, (int)height);
+      else ViewPort = new Rectangle(0, 0, (int)width, (int)height);
+
+      gl?.Viewport(ViewPort.Value.X, ViewPort.Value.Y, ViewPort.Value.Width, ViewPort.Value.Height);
     }
 
 
@@ -137,7 +141,7 @@ void main (void) {
         gl.BindTexture(GL_TEXTURE_2D, _texs[i]);
 
         int length_in_byte = frame->linesize[i] * (i == 0 ? frame->height : frame->height / 2);
-        if ((_buffers[(int)i].Length != length_in_byte / 4) || _frameSize?.Width != frame->width)//rotate -> re-init
+        if ((_buffers[(int)i].Length != length_in_byte / 4) || FrameSize?.Width != frame->width)//rotate -> re-init
         {
           _buffers.Clear();
           InitTexture(frame);
@@ -164,7 +168,7 @@ void main (void) {
 
     private void InitTexture(AVFrame* frame)
     {
-      _frameSize = new Size(frame->width, frame->height);
+      FrameSize = new Size(frame->width, frame->height);
       for (uint i = 0; i < _texs.Length; i++)
       {
         gl.ActiveTexture(GL_TEXTURE0 + i);

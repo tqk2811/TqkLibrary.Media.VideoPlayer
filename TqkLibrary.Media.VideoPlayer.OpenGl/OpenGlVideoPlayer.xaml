@@ -8,6 +8,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
   <Grid>
-    <SharpGlWpf:OpenGLControl x:Name="videoControl"/>
+    <SharpGlWpf:OpenGLControl x:Name="videoControl" Focusable="True"/>
   </Grid>
 </UserControl>

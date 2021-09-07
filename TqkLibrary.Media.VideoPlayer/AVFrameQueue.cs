@@ -2,7 +2,6 @@
 using static FFmpeg.AutoGen.ffmpeg;
 using System;
 using System.Collections.Generic;
-using TqkLibrary.Media.VideoPlayer;
 using TqkLibrary.ScrcpyDotNet;
 
 namespace TqkLibrary.Media.VideoPlayer
